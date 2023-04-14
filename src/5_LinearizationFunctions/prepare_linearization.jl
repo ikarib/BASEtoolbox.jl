@@ -56,9 +56,15 @@ function prepare_linearization(KSS, VmSS, VkSS, distrSS, n_par, m_par)
 
 
     # Produce distributional summary statistics
-    distr_mSS, distr_kSS, distr_ySS, TOP10WshareSS, TOP10IshareSS,TOP10InetshareSS, GiniWSS, GiniCSS, sdlogySS = 
-        distrSummaries(distrSS, 1.0, c_a_starSS, c_n_starSS, n_par, incnet,incgross, m_par)
-
+    distr_mSS, distr_kSS, distr_ySS,
+        GiniWSS, TOP10WshareSS, BOTTOM50WshareSS, rat91WSS, rat51WSS, rat95WSS,
+        GiniCSS, TOP10CshareSS, BOTTOM50CshareSS, rat91CSS, rat51CSS, rat95CSS,
+        GiniInetSS, TOP10InetshareSS, BOTTOM50InetshareSS, rat91InetSS, rat51InetSS, rat95InetSS, 
+        GiniISS, TOP10IshareSS, BOTTOM50IshareSS, rat91ISS, rat51ISS, rat95ISS,
+        TOP10KWshareSS, BOTTOM50KWshareSS,
+        TOP10KshareSS, BOTTOM50KshareSS,
+        sdlogySS = distrSummaries(distrSS, 1.0, c_a_starSS, c_n_starSS, n_par, incnet,incgross, m_par)
+    
     # ------------------------------------------------------------------------------
     # STEP 2: Dimensionality reduction
     # ------------------------------------------------------------------------------

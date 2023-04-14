@@ -90,7 +90,7 @@ function plot_vardecomp(
         if savepdf
             save(string("8_PostEstimation/Figures/CVD/CVD_of_", j, suffix, ".pdf"), p)
         end
-        display(p)
+        #display(p)
     end
     for j in select_variables
         p = ((
@@ -120,7 +120,7 @@ function plot_vardecomp(
                 p,
             )
         end
-        display(p)
+        #display(p)
     end
 
     return df

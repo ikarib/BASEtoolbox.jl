@@ -32,7 +32,13 @@ state_names = [
 ]
 
 # List cross-sectional controls / distributional summary variables (no equations in aggregate model expected)
-distr_names = ["GiniC", "GiniW", "TOP10Ishare", "TOP10Inetshare", "TOP10Wshare", "sdlogy"]
+distr_names = ["GiniW", "TOP10Wshare", "BOTTOM50Wshare", "rat91W", "rat51W", "rat95W", 
+               "GiniC", "TOP10Cshare", "BOTTOM50Cshare", "rat91C", "rat51C", "rat95C",
+               "GiniInet", "TOP10Inetshare", "BOTTOM50Inetshare", "rat91Inet", "rat51Inet", "rat95Inet", 
+               "GiniI", "TOP10Ishare", "BOTTOM50Ishare", "rat91I", "rat51I", "rat95I",
+               "TOP10KWshare", "BOTTOM50KWshare",
+               "TOP10Kshare", "BOTTOM50Kshare",
+               "sdlogy"]
 
 control_names = [
     "r",

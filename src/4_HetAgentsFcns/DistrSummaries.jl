@@ -35,9 +35,11 @@ function distrSummaries(
     distr_y = sum(distr, dims = (1, 2))[:]
 
     total_wealth = Array{eltype(distr)}(undef, n_par.nk .* n_par.nm)
+    koverw       = Array{eltype(distr)}(undef, n_par.nk .* n_par.nm)
     for k = 1:n_par.nk
         for m = 1:n_par.nm
             total_wealth[m+(k-1)*n_par.nm] = n_par.grid_m[m] .+ Q .* n_par.grid_k[k]
+            koverw[m+(k-1)*n_par.nm] = Q .* n_par.grid_k[k] ./ total_wealth[m+(k-1)*n_par.nm]
         end
     end
     # Wealth shares and gini
@@ -48,9 +50,33 @@ function distrSummaries(
     total_wealth_cdf = cumsum(total_wealth_pdf)
     total_wealth_w = total_wealth .* total_wealth_pdf # weighted
     wealthshares = cumsum(total_wealth_w) ./ sum(total_wealth_w)
+    shares = mylinearinterpolate(total_wealth_cdf, wealthshares, [0.5,0.9])
+    BOTTOM50Wshare = shares[1]
+    TOP10Wshare = 1.0 - shares[2]
+    GiniW = gini(total_wealth, total_wealth_pdf)
+    quantiles  = mylinearinterpolate(total_wealth_cdf,total_wealth.-minimum(total_wealth),[0.1,0.5,0.9])
+    rat91W = quantiles[3]/quantiles[1]
+    rat51W = quantiles[2]/quantiles[1]
+    rat95W = quantiles[3]/quantiles[2]
 
-    TOP10Wshare = 1.0 - mylinearinterpolate(total_wealth_cdf, wealthshares, [0.9])[1]
-    giniwealth = gini(total_wealth, total_wealth_pdf)
+    IX = sortperm(koverw)
+    koverw = koverw[IX]
+    koverw_pdf = sum(distr, dims = 3)
+    koverw_pdf = koverw_pdf[IX]
+    koverw_cdf = cumsum(koverw_pdf)
+    koverw_w = koverw .* koverw_pdf # weighted
+    KWshares = cumsum(koverw_w) ./ sum(koverw_w);
+    shares = mylinearinterpolate(koverw_cdf,KWshares,[0.5,0.9])
+    BOTTOM50KWshare = shares[1]
+    TOP10KWshare = 1.0 - shares[2]
+
+    capital_cdf = cumsum(distr_k)
+    capital_w = n_par.grid_k .* distr_k # weighted
+    Kshares = cumsum(capital_w) ./ sum(capital_w)
+    shares = mylinearinterpolate(capital_cdf,Kshares,[0.5,0.9])
+    BOTTOM50Kshare = shares[1]
+    TOP10Kshare = 1.0 - shares[2]
+
     # Consumption distribution
     c = Array{eltype(c_a_star)}(undef, (n_par.nm, n_par.nk, n_par.ny, 2))
     distr_c = similar(c)
@@ -63,11 +89,18 @@ function distrSummaries(
 
     # Gini of goods consumption
     IX = sortperm(c[:])
-    c[:] .= c[IX]
-    distr_c[:] .= distr_c[IX]
-    #S               = [0.0; cumsum(c_pdf.*c)];
-    #giniconsumption = 1.0 .- (sum(c_pdf.*(S[1:end-1] .+ S[2:end]))/S[end]);
-    giniconsumption = gini(c, distr_c)
+    c = c[IX]
+    c_pdf = distr_c[IX]
+    c_cdf = cumsum(c_pdf)
+    Cshares = cumsum(c_pdf.*c)./sum(c.*c_pdf);
+    shares = mylinearinterpolate(c_cdf, Cshares, [0.5,0.9])
+    BOTTOM50Cshare = shares[1]
+    TOP10Cshare = 1.0 - shares[2]
+    GiniC = gini(c, c_pdf)
+    quantiles = mylinearinterpolate(c_cdf,c[:],[0.1,0.5,0.9])
+    rat91C = quantiles[3]/quantiles[1]
+    rat51C = quantiles[2]/quantiles[1]
+    rat95C = quantiles[3]/quantiles[2]
 
     # Top 10 net income share
     capital_inc = inc[2] .+ inc[3] .- n_par.mesh_m
@@ -78,7 +111,14 @@ function distrSummaries(
     Y_cdf = cumsum(Y_pdf)
     Y_w = Yidio .* Y_pdf
     net_incomeshares = cumsum(Y_w) ./ sum(Y_w)
-    TOP10Inetshare = 1.0 .- mylinearinterpolate(Y_cdf, net_incomeshares, [0.9])[1]
+    shares = mylinearinterpolate(Y_cdf, net_incomeshares, [0.5,0.9])
+    BOTTOM50Inetshare = shares[1]
+    TOP10Inetshare = 1.0 - shares[2]
+    GiniInet = gini(Yidio, Y_pdf)
+    quantiles  = mylinearinterpolate(Y_cdf,Yidio,[0.1,0.5,0.9])
+    rat91Inet = quantiles[3]/quantiles[1]
+    rat51Inet = quantiles[2]/quantiles[1]
+    rat95Inet = quantiles[3]/quantiles[2]
 
     # Top 10 gross income share
     Yidio = incgross[1] .+ capital_inc
@@ -88,7 +128,14 @@ function distrSummaries(
     Y_cdf = cumsum(Y_pdf)
     Y_w = Yidio .* Y_pdf
     incomeshares = cumsum(Y_w) ./ sum(Y_w)
-    TOP10Ishare = 1.0 .- mylinearinterpolate(Y_cdf, incomeshares, [0.9])[1]
+    shares = mylinearinterpolate(Y_cdf, incomeshares, [0.5,0.9])
+    BOTTOM50Ishare = shares[1]
+    TOP10Ishare = 1.0 - shares[2]
+    GiniI = gini(Yidio, Y_pdf)
+    quantiles  = mylinearinterpolate(Y_cdf,Yidio,[0.1,0.5,0.9])
+    rat91I = quantiles[3]/quantiles[1]
+    rat51I = quantiles[2]/quantiles[1]
+    rat95I = quantiles[3]/quantiles[2]
 
     # Standard deviation of log labor earnings
     Yidio = log.(incgross[1][:, :, 1:end-1])
@@ -102,15 +149,14 @@ function distrSummaries(
 
 
 
-    return distr_m,
-    distr_k,
-    distr_y,
-    TOP10Wshare,
-    TOP10Ishare,
-    TOP10Inetshare,
-    giniwealth,
-    giniconsumption,
-    sdlogy
+    return distr_m, distr_k, distr_y,
+        GiniW, TOP10Wshare, BOTTOM50Wshare, rat91W, rat51W, rat95W,
+        GiniC, TOP10Cshare, BOTTOM50Cshare, rat91C, rat51C, rat95C,
+        GiniInet, TOP10Inetshare, BOTTOM50Inetshare, rat91Inet, rat51Inet, rat95Inet, 
+        GiniI, TOP10Ishare, BOTTOM50Ishare, rat91I, rat51I, rat95I,
+        TOP10KWshare, BOTTOM50KWshare,
+        TOP10Kshare, BOTTOM50Kshare,
+        sdlogy
 end
 function gini(x, pdf)
     s = 0.0

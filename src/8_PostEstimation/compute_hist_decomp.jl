@@ -13,6 +13,7 @@ function compute_hist_decomp(
     select_variables,
     timeline;
     savepdf = false,
+    savecsv = false,
     prefix = "",
 )
     SHOCKs = e_set.shock_names
@@ -62,23 +63,34 @@ function compute_hist_decomp(
         IRFs[:, :, j] = IRFs_aux
     end
 
-    SHOCKsPlus = push!(copy(SHOCKs), :initial)
+    SHOCKsPlus = pushfirst!(copy(SHOCKs), :measurement)
+    SHOCKsPlus = push!(SHOCKsPlus, :initial)
     SHOCKsPlus = CategoricalArray(string.(SHOCKsPlus))
     levels!(SHOCKsPlus, SHOCKsPlus)
     select_variables = CategoricalArray(string.(select_variables))
     levels!(select_variables, select_variables)
+    observables = CategoricalArray(string.(e_set.observed_vars_input))
     HistDecDF = vcat(
         [
             DataFrame(
                 Time = timeline[t],
                 Variable = select_variables[v],
                 Contribution = IRFs[v, t, s],
-                Shock = SHOCKsPlus[s],
+                Shock = SHOCKsPlus[s+1],
             ) for t = 1:T, v = 1:n_select_var, s = 1:n_shocks+1
+        ]...,
+        [
+            DataFrame(
+                Time = timeline[t],
+                Variable = observables[v],
+                Contribution = smoother_output[7][v, t],
+                Shock = SHOCKsPlus[1],
+            ) for t = 1:T, v = 1:e_set.nobservables
         ]...,
     )
 
     colorlist = [
+        :yellow,
         "#ff0000",
         "#ffcccc",
         "#ff9900",
@@ -118,6 +130,7 @@ function compute_hist_decomp(
             linewidth = 1,
             linecolor = :black,
             legend = false,
+            titlefontsize=8,
             fontfamily = "Computer Modern",
         )
         Plots.xlims!((minimum(timeline) - 2, maximum(timeline) + 2))
@@ -129,7 +142,7 @@ function compute_hist_decomp(
         legend = :inside,
         palette = colorlist,
         framestyle = :none,
-        legendfontsize = 10,
+        legendfontsize = 8,
     )
     p[end] = plot!(
         Matrix{Missing}(undef, 3, 1),
@@ -137,11 +150,11 @@ function compute_hist_decomp(
         legend = :inside,
         linecolor = :black,
         framestyle = :none,
-        legendfontsize = 10,
+        legendfontsize = 8,
         fontfamily = "Computer Modern",
     )
     if savepdf
-        # plot(p...) |> save(string("8_PostEstimation/Figures/Smooth/HistD.pdf"))
+        plot(p...) |> save(string("8_PostEstimation/Figures/Smooth/HistD_",prefix,".pdf"))
         for j in eachindex(select_variables)
             plot!(p[j], title = "", fontfamily = "Computer Modern")
             savefig(
@@ -153,10 +166,32 @@ function compute_hist_decomp(
                     ".pdf",
                 ),
             )
-            display(p[j])
+            #display(p[j])
 
         end
     end
-    display(plot(p...))
+    if savecsv
+        for var in select_variables
+            CSV.write(string(
+                "8_PostEstimation/Figures/Smooth/HistD_",
+                prefix,
+                var,
+                ".csv",
+                ),
+                combine(
+                groupby(HistDecDF[HistDecDF.Variable.==var, :], :Time),
+                :Contribution => sum,
+                )
+            )
+        end
+        CSV.write(string(
+            "8_PostEstimation/Tables/HistD_",
+            prefix,
+            "Total.csv",
+            ),
+            combine(groupby(unstack(HistDecDF, :Variable, :Contribution), :Time),[i=>sum for i=3:n_select_var+2])
+        )
+    end
+    #display(plot(p...))
     return IRFs, HistDecDF, p
 end

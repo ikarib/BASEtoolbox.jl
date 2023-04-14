@@ -275,8 +275,14 @@ function Fsys(
     F[indexes.COP] = COP_thet
 
     # Calculate distribution statistics (generalized moments)
-    _, _, _, TOP10WshareT, TOP10IshareT, TOP10InetshareT, GiniWT, GiniCT, sdlogyT =
-        distrSummaries(PDF_joint, q, c_a_star, c_n_star, n_par, inc, incgross, m_par)
+    _, _, _,
+        GiniWT, TOP10WshareT, BOTTOM50WshareT, rat91WT, rat51WT, rat95WT,
+        GiniCT, TOP10CshareT, BOTTOM50CshareT, rat91CT, rat51CT, rat95CT,
+        GiniInetT, TOP10InetshareT, BOTTOM50InetshareT, rat91InetT, rat51InetT, rat95InetT, 
+        GiniIT, TOP10IshareT, BOTTOM50IshareT, rat91IT, rat51IT, rat95IT,
+        TOP10KWshareT, BOTTOM50KWshareT,
+        TOP10KshareT, BOTTOM50KshareT,
+        sdlogyT = distrSummaries(PDF_joint, q, c_a_star, c_n_star, n_par, inc, incgross, m_par)
 
     # Error Term on prices/aggregate summary vars (logarithmic, controls)
     F[indexes.τlev] = av_tax_rate - av_tax_rate_up
@@ -295,6 +301,29 @@ function Fsys(
     F[indexes.GiniC] = log.(GiniC) - log.(GiniCT)
     F[indexes.sdlogy] = log.(sdlogy) - log.(sdlogyT)
 
+    F[indexes.BOTTOM50Wshare] = log.(BOTTOM50Wshare) - log.(BOTTOM50WshareT)
+    F[indexes.TOP10Cshare] = log.(TOP10Cshare) - log.(TOP10CshareT)
+    F[indexes.BOTTOM50Cshare] = log.(BOTTOM50Cshare) - log.(BOTTOM50CshareT)
+    F[indexes.BOTTOM50Inetshare] = log.(BOTTOM50Inetshare) - log.(BOTTOM50InetshareT)
+    F[indexes.BOTTOM50Ishare] = log.(BOTTOM50Ishare) - log.(BOTTOM50IshareT)
+    F[indexes.TOP10KWshare] = log.(TOP10KWshare) - log.(TOP10KWshareT)
+    F[indexes.BOTTOM50KWshare] = log.(BOTTOM50KWshare) - log.(BOTTOM50KWshareT)
+    F[indexes.TOP10Kshare] = log.(TOP10Kshare) - log.(TOP10KshareT)
+    F[indexes.BOTTOM50Kshare] = log.(BOTTOM50Kshare) - log.(BOTTOM50KshareT)
+    F[indexes.GiniInet] = log.(GiniInet) - log.(GiniInetT)
+    F[indexes.GiniI] = log.(GiniI) - log.(GiniIT)
+    F[indexes.rat91W] = log.(rat91W) - log.(rat91WT)
+    F[indexes.rat51W] = log.(rat51W) - log.(rat51WT)
+    F[indexes.rat95W] = log.(rat95W) - log.(rat95WT)
+    F[indexes.rat91C] = log.(rat91C) - log.(rat91CT)
+    F[indexes.rat51C] = log.(rat51C) - log.(rat51CT)
+    F[indexes.rat95C] = log.(rat95C) - log.(rat95CT)
+    F[indexes.rat91Inet] = log.(rat91Inet) - log.(rat91InetT)
+    F[indexes.rat51Inet] = log.(rat51Inet) - log.(rat51InetT)
+    F[indexes.rat95Inet] = log.(rat95Inet) - log.(rat95InetT)
+    F[indexes.rat91I] = log.(rat91I) - log.(rat91IT)
+    F[indexes.rat51I] = log.(rat51I) - log.(rat51IT)
+    F[indexes.rat95I] = log.(rat95I) - log.(rat95IT)
 
     if only_F
         return F
